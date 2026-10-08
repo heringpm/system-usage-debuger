@@ -22,7 +22,7 @@ deploy. Reads directly from `/proc` and `/sys`.
 | Disk | `/proc/diskstats` | per-device utilization %, IOPS, throughput, queue depth, latency, headroom % |
 | Scheduler | `/proc/stat` | running/blocked thread counts, context-switch rate; flags a hot single core (high busy% while aggregate CPU is low) -- catches lock contention/serialization that aggregate CPU% hides |
 | NUMA | `/sys/devices/system/node/node*/numastat` | per-node local vs. remote (cross-socket) memory-access rate; high "remote %" explains high thread/load activity with low actual throughput, since remote NUMA access is slower than local |
-| Memory bandwidth (optional, `--mem-bandwidth`) | `perf stat` uncore counters | actual DRAM read/write throughput (MB/s). The one thing with no `/proc`/`/sys` source at all -- requires the external `perf` binary, Intel CPU, and root/CAP_PERFMON. Off by default; degrades to a visible "unavailable" status line if unsupported |
+| Memory bandwidth (optional, `--mem-bandwidth`) | `perf stat` uncore counters | actual DRAM read/write throughput (MB/s). The one thing with no `/proc`/`/sys` source at all -- requires the external `perf` binary and root/CAP_PERFMON. Supports Intel (`uncore_imc`) and AMD Zen2+/EPYC (`amd_umc`). Off by default; degrades to a visible "unavailable" status line if unsupported |
 | PCIe | `/sys/bus/pci/devices/*` | current vs max negotiated link speed/width per device, flags degraded links (e.g. a NIC or NVMe drive running below its rated capability) |
 
 "Headroom %" is 100% when a resource is idle and 0% when it's fully
@@ -81,7 +81,7 @@ CLI flags:
 - `--csv PATH` — append every sample to this CSV file (auto-migrates the header if new devices/NICs appear over time)
 - `--once` — take a single sample and exit
 - `--warn-headroom` / `--crit-headroom` — override the default WARN/CRIT headroom % thresholds for cpu/mem/net/disk
-- `--mem-bandwidth` — also show real DRAM read/write bandwidth (MB/s) via `perf stat` uncore counters. Intel-only, needs the `perf` binary plus root or `CAP_PERFMON` (uncore PMUs are system-wide), and adds ~0.2s per sample. Local monitoring only (not supported with `--host`). If unsupported on the machine, shows a visible "unavailable" line instead of failing
+- `--mem-bandwidth` — also show real DRAM read/write bandwidth (MB/s) via `perf stat` uncore counters. Supports Intel and AMD Zen2+/EPYC, needs the `perf` binary plus root or `CAP_PERFMON` (uncore PMUs are system-wide), and adds ~0.2s per sample. Local monitoring only (not supported with `--host`). If unsupported on the machine, shows a visible "unavailable" line instead of failing
 
 ### Remote monitoring over SSH
 

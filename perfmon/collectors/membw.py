@@ -9,17 +9,17 @@ bandwidth. The kernel doesn't track it; only the CPU's uncore
 performance-monitoring unit (PMU) does.
 
 This collector shells out to `perf stat` for a short sampling window and
-reads the `uncore_imc/cas_count_read/` and `uncore_imc/cas_count_write/`
-events (Intel-specific; summed across all memory controllers by perf's
-generic non-indexed alias). Each CAS (column address strobe) count is one
-64-byte cache-line transfer, so bytes = count * 64.
+reads DRAM CAS (column address strobe) command counts, summed across all
+memory controllers by perf's generic non-indexed alias. Each CAS count is
+one 64-byte cache-line transfer, so bytes = count * 64. Two CPU vendors
+are supported, with different event names:
+  - Intel: `uncore_imc/cas_count_read/` and `uncore_imc/cas_count_write/`
+  - AMD (Zen2+/EPYC): `amd_umc/umc_cas_cmd.rd/` and `amd_umc/umc_cas_cmd.wr/`
 
 Opt-in only (NOT part of the default collector set) because it:
   - requires the external `perf` binary (breaks the "pure stdlib" design
     for everyone who doesn't explicitly ask for it)
   - usually requires root or CAP_PERFMON (uncore PMUs are system-wide)
-  - is currently Intel-only; AMD's equivalent (Data Fabric PMU) uses
-    different, less standardized event names and isn't implemented here
   - blocks for a short window (default 0.2s) per sample to let perf
     count, adding minor latency to each sampling cycle
 
@@ -53,20 +53,32 @@ def _discover_events():
         _events_cache = ""
         return _events_cache
     read_ev = write_ev = None
+    amd_read_ev = amd_write_ev = None
     for line in out.splitlines():
         name = line.strip().split()[0] if line.strip() else ""
         if name.endswith("cas_count_read/"):
             read_ev = name
         elif name.endswith("cas_count_write/"):
             write_ev = name
-    _events_cache = f"{read_ev},{write_ev}" if read_ev and write_ev else ""
+        elif name.endswith("umc_cas_cmd.rd/"):
+            amd_read_ev = name
+        elif name.endswith("umc_cas_cmd.wr/"):
+            amd_write_ev = name
+    if read_ev and write_ev:
+        _events_cache = f"{read_ev},{write_ev}"
+    elif amd_read_ev and amd_write_ev:
+        _events_cache = f"{amd_read_ev},{amd_write_ev}"
+    else:
+        _events_cache = ""
     return _events_cache
 
 
 def read():
     events = _discover_events()
     if not events:
-        return {"available": False, "reason": "perf not installed or uncore_imc events not found (Intel-only)"}
+        return {"available": False,
+                "reason": "perf not installed or no supported DRAM bandwidth events found "
+                           "(needs uncore_imc on Intel or amd_umc on AMD)"}
     try:
         proc = subprocess.run(
             ["perf", "stat", "-e", events, "-a", "-x,", "sleep", str(WINDOW_S)],
