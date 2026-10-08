@@ -106,6 +106,14 @@ Then add Prometheus as a Grafana data source and graph any `perfmon_*`
 metric (e.g. `perfmon_cpu_busy_percent`, `perfmon_disk_util_percent{device="sda"}`,
 `perfmon_rdma_rx_mbps{device="..."}`) over time while a job runs.
 
+A ready-made dashboard covering every section (CPU/scheduler, top
+processes, NUMA, memory bandwidth, network, RDMA, disk, PCIe) is at
+[`grafana/perfmon-dashboard.json`](grafana/perfmon-dashboard.json). In
+Grafana: **Dashboards → New → Import**, upload/paste the file, pick your
+Prometheus data source when prompted. It includes a `$host` template
+variable (defaults to all hosts) for filtering when monitoring multiple
+machines via `--host`.
+
 ### Remote monitoring over SSH
 
 You can point `perfmon` at one or more remote hosts without installing
