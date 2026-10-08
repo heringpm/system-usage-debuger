@@ -14,6 +14,10 @@ DEFAULTS = {
     "net_headroom_pct": {"warn": 20.0, "crit": 5.0},
     "rdma_headroom_pct": {"warn": 20.0, "crit": 5.0},
     "disk_headroom_pct": {"warn": 20.0, "crit": 5.0},
+    # Memory bandwidth headroom vs. theoretical peak. Looser than other
+    # headroom thresholds since real DRAM rarely reaches 100% of the
+    # theoretical peak even when fully saturated (~80-90% is typical).
+    "membw_headroom_pct": {"warn": 15.0, "crit": 0.0},
     # PSI "some avg10" stall percentage: higher is worse (not a headroom value).
     "psi_some_avg10": {"warn": 10.0, "crit": 25.0},
     "swap_used_pct": {"warn": 10.0, "crit": 50.0},
@@ -105,8 +109,14 @@ def evaluate(sample, thresholds=None):
                           f"{cpu['busy_pct']:.0f}% -- possible single-threaded bottleneck or lock contention"))
 
     membw = sample.get("membw")
-    if membw is not None and not membw.get("available"):
-        findings.append(("membw", WARN, membw.get("reason", "memory bandwidth collector unavailable")))
+    if membw is not None:
+        if not membw.get("available"):
+            findings.append(("membw", WARN, membw.get("reason", "memory bandwidth collector unavailable")))
+        elif membw.get("headroom_pct") is not None:
+            s = status_from_headroom(membw["headroom_pct"], t["membw_headroom_pct"])
+            findings.append(("membw.headroom", s,
+                              f"{membw['total_mbps']:.0f} MB/s used of ~{membw['peak_mbps']:.0f} MB/s theoretical peak "
+                              f"({membw['headroom_pct']:.1f}% headroom)"))
 
     for name, port in (sample.get("rdma") or {}).items():
         if port["headroom_pct"] is None:

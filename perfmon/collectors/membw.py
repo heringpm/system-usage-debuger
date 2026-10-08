@@ -29,7 +29,9 @@ denied -- so enabling this flag on an unsupported box is a visible but
 harmless status line rather than a crash.
 """
 import csv
+import glob
 import io
+import re
 import shutil
 import subprocess
 
@@ -37,6 +39,7 @@ CACHE_LINE_BYTES = 64
 WINDOW_S = 0.2
 
 _events_cache = None  # None = not checked yet; "" = checked, unsupported; else "ev1,ev2"
+_peak_mbps_cache = -1  # -1 = not checked yet; None = checked, unavailable; else a float
 
 
 def _discover_events():
@@ -71,6 +74,54 @@ def _discover_events():
     else:
         _events_cache = ""
     return _events_cache
+
+
+def _channel_count(events):
+    """Count populated/active memory-controller channels by counting the
+    underlying per-instance uncore PMUs in sysfs (e.g. uncore_imc_0,
+    uncore_imc_1, ... on Intel, or amd_umc_0, amd_umc_1, ... on AMD). This
+    is derived from the live system rather than hard-coded per CPU model,
+    so it works on any channel count/population on either vendor."""
+    prefix = events.split(",")[0].split("/")[0]  # e.g. "uncore_imc" or "amd_umc"
+    matches = glob.glob(f"/sys/bus/event_source/devices/{prefix}_*")
+    return len(matches) or None
+
+
+def _dimm_speed_mts():
+    """Get the actual running memory speed (MT/s) via `dmidecode`, taking
+    the speed reported for populated DIMMs (ignores empty slots). Works
+    for any DIMM count/size/speed mix since it reads the live hardware
+    rather than assuming a particular layout."""
+    if not shutil.which("dmidecode"):
+        return None
+    try:
+        out = subprocess.run(["dmidecode", "-t", "memory"], capture_output=True, text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    speeds = []
+    for line in out.splitlines():
+        m = re.search(r"Configured Memory Speed:\s*(\d+)\s*MT/s", line)
+        if m:
+            speeds.append(int(m.group(1)))
+    return max(speeds) if speeds else None
+
+
+def _peak_mbps(events):
+    """Theoretical peak DRAM bandwidth (MB/s) = channels * speed(MT/s) *
+    8 bytes (64-bit bus per channel). Cached since it only depends on
+    static hardware facts. Returns None if it can't be determined
+    (missing dmidecode/permissions/sysfs PMU entries), in which case the
+    bandwidth is still shown, just without a headroom percentage."""
+    global _peak_mbps_cache
+    if _peak_mbps_cache != -1:
+        return _peak_mbps_cache
+    channels = _channel_count(events)
+    speed_mts = _dimm_speed_mts()
+    if not channels or not speed_mts:
+        _peak_mbps_cache = None
+    else:
+        _peak_mbps_cache = channels * speed_mts * 8
+    return _peak_mbps_cache
 
 
 def read():
@@ -111,6 +162,7 @@ def read():
         "read_count": counts[read_ev],
         "write_count": counts[write_ev],
         "window_s": WINDOW_S,
+        "events": events,
     }
 
 
@@ -124,9 +176,16 @@ def compute(prev, curr, dt):
     window_s = curr["window_s"]
     read_bps = curr["read_count"] * CACHE_LINE_BYTES / window_s
     write_bps = curr["write_count"] * CACHE_LINE_BYTES / window_s
+    total_mbps = (read_bps + write_bps) / 1_000_000
+
+    peak_mbps = _peak_mbps(curr["events"])
+    headroom_pct = max(0.0, 100.0 - (total_mbps / peak_mbps * 100.0)) if peak_mbps else None
+
     return {
         "available": True,
         "read_mbps": read_bps / 1_000_000,
         "write_mbps": write_bps / 1_000_000,
-        "total_mbps": (read_bps + write_bps) / 1_000_000,
+        "total_mbps": total_mbps,
+        "peak_mbps": peak_mbps,
+        "headroom_pct": headroom_pct,
     }

@@ -51,9 +51,15 @@ def build_lines(sample, evaluation):
     if membw is not None:
         header("MEM BANDWIDTH")
         if membw.get("available"):
-            lines.append((th.OK,
+            lines.append((status_by_label.get("membw.headroom", th.OK),
                           f"  read {membw['read_mbps']:9.0f} MB/s  write {membw['write_mbps']:9.0f} MB/s  "
                           f"total {membw['total_mbps']:9.0f} MB/s"))
+            if membw.get("peak_mbps"):
+                lines.append((th.OK,
+                              f"  peak ~{membw['peak_mbps']:9.0f} MB/s (theoretical)  "
+                              f"headroom {membw['headroom_pct']:5.1f}%"))
+            else:
+                lines.append((th.OK, "  peak bandwidth unknown (needs dmidecode + readable DIMM info)"))
         else:
             lines.append((status_by_label.get("membw", th.WARN), f"  unavailable: {membw.get('reason', '')}"))
 
