@@ -3,7 +3,7 @@ import curses
 import time
 
 from . import thresholds as th
-from .render import build_lines, build_multi_lines
+from .render import HEAD, build_lines, build_multi_lines
 
 COLOR_PAIR = {}  # filled in once curses.start_color() has run
 
@@ -14,9 +14,11 @@ def _init_colors():
     curses.init_pair(1, curses.COLOR_GREEN, -1)
     curses.init_pair(2, curses.COLOR_YELLOW, -1)
     curses.init_pair(3, curses.COLOR_RED, -1)
+    curses.init_pair(4, curses.COLOR_CYAN, -1)
     COLOR_PAIR[th.OK] = curses.color_pair(1)
     COLOR_PAIR[th.WARN] = curses.color_pair(2) | curses.A_BOLD
     COLOR_PAIR[th.CRIT] = curses.color_pair(3) | curses.A_BOLD
+    COLOR_PAIR[HEAD] = curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE
 
 
 def _draw(stdscr, sample, evaluation, is_multi):
@@ -30,9 +32,12 @@ def _draw(stdscr, sample, evaluation, is_multi):
     lines = build_multi_lines(sample, evaluation) if is_multi else build_lines(sample, evaluation)
     row = 2
     for status, text in lines:
+        if status == HEAD:
+            row += 1  # blank line before each section header for spacing
         if row >= max_y:
             break
-        stdscr.addstr(row, 0, text[:max_x - 1], COLOR_PAIR.get(status, 0))
+        if text:
+            stdscr.addstr(row, 0, text[:max_x - 1], COLOR_PAIR.get(status, 0))
         row += 1
     stdscr.refresh()
 

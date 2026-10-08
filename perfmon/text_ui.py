@@ -4,9 +4,9 @@ import sys
 import time
 
 from . import thresholds as th
-from .render import build_lines, build_multi_lines
+from .render import HEAD, build_lines, build_multi_lines
 
-ANSI = {th.OK: "\033[32m", th.WARN: "\033[33m", th.CRIT: "\033[31m"}
+ANSI = {th.OK: "\033[32m", th.WARN: "\033[33m", th.CRIT: "\033[31m", HEAD: "\033[1;36m"}
 RESET = "\033[0m"
 CLEAR = "\033[2J\033[H"
 
@@ -34,6 +34,14 @@ def run(sampler, interval, thresholds_cfg, duration=None, stream=sys.stdout):
             out.append(header.ljust(width))
             out.append("-" * min(width, 100))
             for status, text in lines:
+                if status == HEAD:
+                    out.append("")
+                    if use_color:
+                        out.append(f"{ANSI[HEAD]}{text}{RESET}")
+                    elif text:
+                        out.append(text)
+                        out.append("-" * len(text))
+                    continue
                 if use_color:
                     out.append(f"{ANSI[status]}{text}{RESET}")
                 else:
