@@ -1,0 +1,16 @@
+[project]
+name = "perfmon"
+version = "0.1.0"
+description = "Headroom-focused performance monitor for storage servers and clients (CPU, memory, network, disk, PCIe)"
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+perfmon = "perfmon.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["perfmon*"]
