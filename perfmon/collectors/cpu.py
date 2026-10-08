@@ -63,6 +63,16 @@ def compute(prev, curr, dt):
         aggregate = {k: 0.0 for k in FIELDS}
         busy_pct = 0.0
 
+    # Hottest individual core: aggregate busy% can look moderate/low while
+    # one core is pegged at 100% serializing everything behind it (e.g. a
+    # single-threaded hot path or lock holder) -- a pattern invisible in
+    # the aggregate number alone.
+    hot_core = hot_core_busy_pct = None
+    for name, pct in per_cpu.items():
+        core_busy = max(0.0, 100.0 - pct["idle"] - pct.get("iowait", 0.0))
+        if hot_core_busy_pct is None or core_busy > hot_core_busy_pct:
+            hot_core, hot_core_busy_pct = name, core_busy
+
     return {
         "per_cpu_pct": per_cpu,
         "aggregate_pct": aggregate,
@@ -72,4 +82,6 @@ def compute(prev, curr, dt):
         "load_per_core": (curr["loadavg"][0] / curr["count"]) if curr["loadavg"] else None,
         "cpu_count": curr["count"],
         "psi": curr["psi"],
+        "hot_core": hot_core,
+        "hot_core_busy_pct": hot_core_busy_pct,
     }

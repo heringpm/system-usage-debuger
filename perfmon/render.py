@@ -27,6 +27,35 @@ def build_lines(sample, evaluation):
         if psi and "some" in psi:
             lines.append((status_by_label.get("cpu.psi_some_avg10", th.OK),
                           f"  PSI some avg10={psi['some']['avg10']:.1f}% avg60={psi['some']['avg60']:.1f}%"))
+        if "cpu.hot_core" in status_by_label:
+            detail = next(d for lbl, s, d in evaluation["findings"] if lbl == "cpu.hot_core")
+            lines.append((status_by_label["cpu.hot_core"], f"  {detail}"))
+
+    sched = sample.get("sched")
+    if sched and sched.get("procs_running") is not None:
+        header("SCHEDULER")
+        lines.append((status_by_label.get("sched.procs_blocked", th.OK),
+                      f"  running {sched['procs_running']}  blocked {sched['procs_blocked']}  "
+                      f"context-switches {sched['ctxt_per_s']:.0f}/s"))
+
+    numa_nodes = sample.get("numa") or {}
+    if numa_nodes:
+        header("NUMA")
+        for name, node in sorted(numa_nodes.items()):
+            label = f"numa.{name}.remote_pct"
+            lines.append((status_by_label.get(label, th.OK),
+                          f"  {name:<8} local {node['local_per_s']:8.0f}/s  remote {node['other_per_s']:8.0f}/s  "
+                          f"remote {node['remote_pct']:5.1f}%  miss {node['miss_per_s']:.0f}/s"))
+
+    membw = sample.get("membw")
+    if membw is not None:
+        header("MEM BANDWIDTH")
+        if membw.get("available"):
+            lines.append((th.OK,
+                          f"  read {membw['read_mbps']:9.0f} MB/s  write {membw['write_mbps']:9.0f} MB/s  "
+                          f"total {membw['total_mbps']:9.0f} MB/s"))
+        else:
+            lines.append((status_by_label.get("membw", th.WARN), f"  unavailable: {membw.get('reason', '')}"))
 
     mem = sample.get("memory") or {}
     if mem:

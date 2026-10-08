@@ -20,6 +20,9 @@ deploy. Reads directly from `/proc` and `/sys`.
 | Network | `/proc/net/dev`, `/sys/class/net/*/speed` | per-NIC throughput (Mb/s, pps), errors/drops, **utilization vs negotiated link speed**, headroom % |
 | RDMA | `/sys/class/infiniband/*/ports/*/` | per-HCA-port throughput (Mb/s, pps), errors/discards, utilization vs negotiated link rate, headroom %. Needed because RoCE/InfiniBand verbs traffic bypasses the normal netdev stack and never shows up under "Network" |
 | Disk | `/proc/diskstats` | per-device utilization %, IOPS, throughput, queue depth, latency, headroom % |
+| Scheduler | `/proc/stat` | running/blocked thread counts, context-switch rate; flags a hot single core (high busy% while aggregate CPU is low) -- catches lock contention/serialization that aggregate CPU% hides |
+| NUMA | `/sys/devices/system/node/node*/numastat` | per-node local vs. remote (cross-socket) memory-access rate; high "remote %" explains high thread/load activity with low actual throughput, since remote NUMA access is slower than local |
+| Memory bandwidth (optional, `--mem-bandwidth`) | `perf stat` uncore counters | actual DRAM read/write throughput (MB/s). The one thing with no `/proc`/`/sys` source at all -- requires the external `perf` binary, Intel CPU, and root/CAP_PERFMON. Off by default; degrades to a visible "unavailable" status line if unsupported |
 | PCIe | `/sys/bus/pci/devices/*` | current vs max negotiated link speed/width per device, flags degraded links (e.g. a NIC or NVMe drive running below its rated capability) |
 
 "Headroom %" is 100% when a resource is idle and 0% when it's fully
@@ -37,6 +40,11 @@ configurable thresholds (`perfmon/thresholds.py`):
 | Network headroom | 20% | 5% |
 | RDMA headroom | 20% | 5% |
 | Disk headroom | 20% | 5% |
+
+| Metric (higher is worse) | WARN above | CRIT above |
+|---|---|---|
+| NUMA remote-access % | 20% | 50% |
+| Threads blocked | 1 | 8 |
 
 PSI stall % and swap used % use the opposite direction (higher is
 worse): WARN at 10%/10%, CRIT at 25%/50%. A degraded PCIe link always
@@ -73,6 +81,7 @@ CLI flags:
 - `--csv PATH` — append every sample to this CSV file (auto-migrates the header if new devices/NICs appear over time)
 - `--once` — take a single sample and exit
 - `--warn-headroom` / `--crit-headroom` — override the default WARN/CRIT headroom % thresholds for cpu/mem/net/disk
+- `--mem-bandwidth` — also show real DRAM read/write bandwidth (MB/s) via `perf stat` uncore counters. Intel-only, needs the `perf` binary plus root or `CAP_PERFMON` (uncore PMUs are system-wide), and adds ~0.2s per sample. Local monitoring only (not supported with `--host`). If unsupported on the machine, shows a visible "unavailable" line instead of failing
 
 ### Remote monitoring over SSH
 

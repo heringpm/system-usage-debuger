@@ -17,6 +17,10 @@ DEFAULTS = {
     # PSI "some avg10" stall percentage: higher is worse (not a headroom value).
     "psi_some_avg10": {"warn": 10.0, "crit": 25.0},
     "swap_used_pct": {"warn": 10.0, "crit": 50.0},
+    # NUMA: % of memory accesses crossing to a remote node. Higher is worse.
+    "numa_remote_pct": {"warn": 20.0, "crit": 50.0},
+    # Scheduler: threads stuck in uninterruptible/blocked state. Higher is worse.
+    "procs_blocked": {"warn": 1.0, "crit": 8.0},
 }
 
 
@@ -82,6 +86,27 @@ def evaluate(sample, thresholds=None):
         s = status_from_headroom(net["headroom_pct"], t["net_headroom_pct"])
         findings.append((f"net.{name}.headroom", s,
                           f"{net['headroom_pct']:.1f}% headroom of {net['link_mbps']} Mb/s link"))
+
+    for name, node in (sample.get("numa") or {}).items():
+        s = status_from_load(node["remote_pct"], t["numa_remote_pct"])
+        findings.append((f"numa.{name}.remote_pct", s,
+                          f"{node['remote_pct']:.1f}% of accesses crossed to a remote NUMA node"))
+
+    sched = sample.get("sched")
+    if sched and sched.get("procs_blocked") is not None:
+        s = status_from_load(sched["procs_blocked"], t["procs_blocked"])
+        findings.append(("sched.procs_blocked", s,
+                          f"{sched['procs_blocked']} thread(s) blocked (uninterruptible I/O or lock contention)"))
+
+    cpu = sample.get("cpu")
+    if cpu and cpu.get("hot_core") and cpu.get("busy_pct", 0) < 60 and (cpu.get("hot_core_busy_pct") or 0) > 90:
+        findings.append(("cpu.hot_core", WARN,
+                          f"{cpu['hot_core']} is at {cpu['hot_core_busy_pct']:.0f}% busy while aggregate CPU is only "
+                          f"{cpu['busy_pct']:.0f}% -- possible single-threaded bottleneck or lock contention"))
+
+    membw = sample.get("membw")
+    if membw is not None and not membw.get("available"):
+        findings.append(("membw", WARN, membw.get("reason", "memory bandwidth collector unavailable")))
 
     for name, port in (sample.get("rdma") or {}).items():
         if port["headroom_pct"] is None:

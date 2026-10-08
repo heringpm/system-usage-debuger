@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 
-from .sampler import Sampler
+from .sampler import Sampler, COLLECTORS
 from . import thresholds as th
 from .csvlog import CsvLogger
 
@@ -43,6 +43,10 @@ def parse_args(argv=None):
     p.add_argument("--ssh-arg", action="append", default=[], metavar="ARG",
                     help="extra argument to pass to ssh (repeatable), e.g. --ssh-arg -i --ssh-arg ~/.ssh/id_ed25519")
     p.add_argument("--remote-python", default="python3", help="python interpreter to use on remote hosts (default: python3)")
+    p.add_argument("--mem-bandwidth", action="store_true",
+                    help="also measure DRAM read/write bandwidth via `perf stat` uncore counters "
+                         "(Intel-only, needs the `perf` binary + root/CAP_PERFMON; adds ~0.2s per "
+                         "sample; off by default). Not supported for --host (remote) targets.")
     return p.parse_args(argv)
 
 
@@ -50,6 +54,9 @@ def _build_sampler(args):
     if args.host:
         from .remote import MultiHostSampler
         return MultiHostSampler(args.host, args.interval, python=args.remote_python, ssh_args=args.ssh_arg)
+    if args.mem_bandwidth:
+        from .collectors import membw
+        return Sampler(collectors={**COLLECTORS, "membw": membw})
     return Sampler()
 
 
