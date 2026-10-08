@@ -15,6 +15,7 @@ installed there -- perfmon ships its collector logic to the remote host
 over the SSH session itself.
 """
 import argparse
+import functools
 import json
 import sys
 
@@ -32,6 +33,9 @@ def parse_args(argv=None):
                     help="'live' = curses dashboard, 'text' = plain-text prints, "
                          "'json' = one JSON object per sample to stdout (default: live)")
     p.add_argument("--csv", metavar="PATH", help="also append each sample to this CSV file")
+    p.add_argument("--no-clear", action="store_true",
+                    help="(--mode text only) don't clear the screen between samples -- each sample "
+                         "prints below the last so your terminal's normal scrollback shows history")
     p.add_argument("--once", action="store_true", help="take a single sample, print it, and exit")
     p.add_argument("--warn-headroom", type=float, default=None,
                     help="override default WARN headroom %% threshold for cpu/mem/net/disk")
@@ -102,6 +106,8 @@ def main(argv=None):
             _run_json(sampler, args, thresholds_cfg, csv_logger, is_multi)
         elif args.mode == "text":
             from .text_ui import run as run_text
+            if args.no_clear:
+                run_text = functools.partial(run_text, clear=False)
             _wrap_csv(run_text, sampler, args, thresholds_cfg, csv_logger, is_multi)
         else:
             from .curses_ui import run as run_curses

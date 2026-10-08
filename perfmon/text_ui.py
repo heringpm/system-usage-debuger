@@ -11,7 +11,7 @@ RESET = "\033[0m"
 CLEAR = "\033[2J\033[H"
 
 
-def run(sampler, interval, thresholds_cfg, duration=None, stream=sys.stdout):
+def run(sampler, interval, thresholds_cfg, duration=None, stream=sys.stdout, clear=True):
     start = time.monotonic()
     use_color = stream.isatty()
     is_multi = getattr(sampler, "is_multi", False)
@@ -26,7 +26,7 @@ def run(sampler, interval, thresholds_cfg, duration=None, stream=sys.stdout):
                 lines = build_lines(sample, evaluation)
 
             out = []
-            if use_color:
+            if use_color and clear:
                 out.append(CLEAR)
             width = shutil.get_terminal_size((100, 24)).columns
             ts = time.strftime("%H:%M:%S")
