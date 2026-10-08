@@ -49,13 +49,13 @@
         "hide": 0
       },
       {
-        "name": "host",
+        "name": "instance",
         "type": "query",
         "datasource": {
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "query": "label_values(host)",
+        "query": "label_values(perfmon_cpu_busy_percent, instance)",
         "refresh": 2,
         "includeAll": true,
         "multi": true,
@@ -65,7 +65,8 @@
         },
         "allValue": ".*",
         "sort": 1,
-        "hide": 0
+        "hide": 0,
+        "label": "Instance"
       }
     ]
   },
@@ -106,8 +107,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_cpu_busy_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}}",
+          "expr": "perfmon_cpu_busy_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -160,7 +161,7 @@
       },
       "targets": [
         {
-          "expr": "perfmon_cpu_headroom_percent{host=~\"$host\"}",
+          "expr": "perfmon_cpu_headroom_percent{instance=~\"$instance\"}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -210,7 +211,7 @@
       },
       "targets": [
         {
-          "expr": "perfmon_memory_used_percent{host=~\"$host\"}",
+          "expr": "perfmon_memory_used_percent{instance=~\"$instance\"}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -277,8 +278,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_cpu_busy_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} aggregate",
+          "expr": "perfmon_cpu_busy_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} aggregate",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -286,8 +287,8 @@
           }
         },
         {
-          "expr": "perfmon_cpu_hot_core_busy_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} hot core {{core}}",
+          "expr": "perfmon_cpu_hot_core_busy_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} hot core {{core}}",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -340,8 +341,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_cpu_load1{host=~\"$host\"}",
-          "legendFormat": "{{host}} load1",
+          "expr": "perfmon_cpu_load1{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} load1",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -349,8 +350,8 @@
           }
         },
         {
-          "expr": "perfmon_cpu_load5{host=~\"$host\"}",
-          "legendFormat": "{{host}} load5",
+          "expr": "perfmon_cpu_load5{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} load5",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -358,8 +359,8 @@
           }
         },
         {
-          "expr": "perfmon_cpu_load15{host=~\"$host\"}",
-          "legendFormat": "{{host}} load15",
+          "expr": "perfmon_cpu_load15{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} load15",
           "refId": "C",
           "datasource": {
             "type": "prometheus",
@@ -412,8 +413,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_cpu_psi_some_avg10{host=~\"$host\"}",
-          "legendFormat": "{{host}}",
+          "expr": "perfmon_cpu_psi_some_avg10{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -466,8 +467,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_sched_context_switches_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}}",
+          "expr": "perfmon_sched_context_switches_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -520,8 +521,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_sched_procs_running{host=~\"$host\"}",
-          "legendFormat": "{{host}} running",
+          "expr": "perfmon_sched_procs_running{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} running",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -529,8 +530,8 @@
           }
         },
         {
-          "expr": "perfmon_sched_procs_blocked{host=~\"$host\"}",
-          "legendFormat": "{{host}} blocked",
+          "expr": "perfmon_sched_procs_blocked{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} blocked",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -583,8 +584,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_memory_headroom_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}}",
+          "expr": "perfmon_memory_headroom_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -654,8 +655,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_proc_cpu_total_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{comm}} ({{pid}})",
+          "expr": "perfmon_proc_cpu_total_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{comm}} ({{pid}})",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -725,8 +726,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_numa_local_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} node {{node}} local",
+          "expr": "perfmon_numa_local_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} node {{node}} local",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -734,8 +735,8 @@
           }
         },
         {
-          "expr": "perfmon_numa_remote_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} node {{node}} remote",
+          "expr": "perfmon_numa_remote_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} node {{node}} remote",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -788,8 +789,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_numa_remote_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} node {{node}}",
+          "expr": "perfmon_numa_remote_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} node {{node}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -842,8 +843,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_numa_miss_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} node {{node}}",
+          "expr": "perfmon_numa_miss_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} node {{node}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -913,8 +914,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_membw_read_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} read",
+          "expr": "perfmon_membw_read_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} read",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -922,8 +923,8 @@
           }
         },
         {
-          "expr": "perfmon_membw_write_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} write",
+          "expr": "perfmon_membw_write_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} write",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -931,8 +932,8 @@
           }
         },
         {
-          "expr": "perfmon_membw_total_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} total",
+          "expr": "perfmon_membw_total_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} total",
           "refId": "C",
           "datasource": {
             "type": "prometheus",
@@ -940,8 +941,8 @@
           }
         },
         {
-          "expr": "perfmon_membw_peak_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} peak",
+          "expr": "perfmon_membw_peak_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} peak",
           "refId": "D",
           "datasource": {
             "type": "prometheus",
@@ -994,7 +995,7 @@
       },
       "targets": [
         {
-          "expr": "perfmon_membw_headroom_percent{host=~\"$host\"}",
+          "expr": "perfmon_membw_headroom_percent{instance=~\"$instance\"}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1061,8 +1062,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_network_rx_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} rx",
+          "expr": "perfmon_network_rx_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} rx",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1070,8 +1071,8 @@
           }
         },
         {
-          "expr": "perfmon_network_tx_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} tx",
+          "expr": "perfmon_network_tx_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} tx",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -1124,8 +1125,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_network_headroom_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}}",
+          "expr": "perfmon_network_headroom_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1178,8 +1179,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_network_rx_errors_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} rx",
+          "expr": "perfmon_network_rx_errors_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} rx",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1187,8 +1188,8 @@
           }
         },
         {
-          "expr": "perfmon_network_tx_errors_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} tx",
+          "expr": "perfmon_network_tx_errors_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} tx",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -1258,8 +1259,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_rdma_rx_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} rx",
+          "expr": "perfmon_rdma_rx_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} rx",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1267,8 +1268,8 @@
           }
         },
         {
-          "expr": "perfmon_rdma_tx_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} tx",
+          "expr": "perfmon_rdma_tx_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} tx",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -1321,8 +1322,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_rdma_headroom_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}}",
+          "expr": "perfmon_rdma_headroom_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1375,8 +1376,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_rdma_errors_per_second{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}}",
+          "expr": "perfmon_rdma_errors_per_second{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1446,8 +1447,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_disk_util_percent{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}}",
+          "expr": "perfmon_disk_util_percent{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}}",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1500,8 +1501,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_disk_read_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} read",
+          "expr": "perfmon_disk_read_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} read",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1509,8 +1510,8 @@
           }
         },
         {
-          "expr": "perfmon_disk_write_mbps{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} write",
+          "expr": "perfmon_disk_write_mbps{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} write",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -1563,8 +1564,8 @@
       },
       "targets": [
         {
-          "expr": "perfmon_disk_avg_queue_depth{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} qd",
+          "expr": "perfmon_disk_avg_queue_depth{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} qd",
           "refId": "A",
           "datasource": {
             "type": "prometheus",
@@ -1572,8 +1573,8 @@
           }
         },
         {
-          "expr": "perfmon_disk_avg_latency_ms{host=~\"$host\"}",
-          "legendFormat": "{{host}} {{device}} lat ms",
+          "expr": "perfmon_disk_avg_latency_ms{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{device}} lat ms",
           "refId": "B",
           "datasource": {
             "type": "prometheus",
@@ -1643,7 +1644,7 @@
       },
       "targets": [
         {
-          "expr": "perfmon_pci_degraded{host=~\"$host\"} == 1",
+          "expr": "perfmon_pci_degraded{instance=~\"$instance\"} == 1",
           "format": "table",
           "instant": true,
           "refId": "A",
