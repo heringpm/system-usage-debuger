@@ -31,6 +31,16 @@ def build_lines(sample, evaluation):
             detail = next(d for lbl, s, d in evaluation["findings"] if lbl == "cpu.hot_core")
             lines.append((status_by_label["cpu.hot_core"], f"  {detail}"))
 
+    procs = sample.get("procs") or {}
+    top_procs = procs.get("top") or []
+    if top_procs:
+        header("TOP PROCESSES (CPU: user / sys, % of one core)")
+        for p in top_procs:
+            lines.append((th.OK,
+                          f"  {p['pid']:>7} {p['comm'][:20]:<20} "
+                          f"total {p['total_pct']:6.1f}%  "
+                          f"user {p['user_pct']:6.1f}%  sys {p['sys_pct']:6.1f}%"))
+
     sched = sample.get("sched")
     if sched and sched.get("procs_running") is not None:
         header("SCHEDULER")

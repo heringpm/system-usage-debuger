@@ -18,6 +18,7 @@ from .collectors import pci as pci_mod
 from .collectors import rdma as rdma_mod
 from .collectors import numa as numa_mod
 from .collectors import sched as sched_mod
+from .collectors import procs as procs_mod
 
 # (module, bundle-local prefix); psi has no read/compute to rename.
 _COLLECTOR_MODULES = [
@@ -29,6 +30,7 @@ _COLLECTOR_MODULES = [
     ("rdma", rdma_mod),
     ("numa", numa_mod),
     ("sched", sched_mod),
+    ("procs", procs_mod),
 ]
 
 _MAIN_TEMPLATE = '''
@@ -43,6 +45,7 @@ def _collect_raw():
         "rdma": rdma_read(),
         "numa": numa_read(),
         "sched": sched_read(),
+        "procs": procs_read(),
     }
 
 
@@ -66,6 +69,7 @@ def main():
             "rdma": rdma_compute(prev["rdma"], curr["rdma"], dt),
             "numa": numa_compute(prev["numa"], curr["numa"], dt),
             "sched": sched_compute(prev["sched"], curr["sched"], dt),
+            "procs": procs_compute(prev["procs"], curr["procs"], dt),
         }
         try:
             sys.stdout.write(json.dumps(sample, default=str) + "\\n")
