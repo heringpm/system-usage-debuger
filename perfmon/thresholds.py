@@ -12,6 +12,7 @@ DEFAULTS = {
     "cpu_headroom_pct": {"warn": 20.0, "crit": 5.0},
     "mem_headroom_pct": {"warn": 15.0, "crit": 5.0},
     "net_headroom_pct": {"warn": 20.0, "crit": 5.0},
+    "rdma_headroom_pct": {"warn": 20.0, "crit": 5.0},
     "disk_headroom_pct": {"warn": 20.0, "crit": 5.0},
     # PSI "some avg10" stall percentage: higher is worse (not a headroom value).
     "psi_some_avg10": {"warn": 10.0, "crit": 25.0},
@@ -81,6 +82,13 @@ def evaluate(sample, thresholds=None):
         s = status_from_headroom(net["headroom_pct"], t["net_headroom_pct"])
         findings.append((f"net.{name}.headroom", s,
                           f"{net['headroom_pct']:.1f}% headroom of {net['link_mbps']} Mb/s link"))
+
+    for name, port in (sample.get("rdma") or {}).items():
+        if port["headroom_pct"] is None:
+            continue
+        s = status_from_headroom(port["headroom_pct"], t["rdma_headroom_pct"])
+        findings.append((f"rdma.{name}.headroom", s,
+                          f"{port['headroom_pct']:.1f}% headroom of {port['link_mbps']:.0f} Mb/s link"))
 
     for name, disk in (sample.get("disk") or {}).items():
         s = status_from_headroom(disk["headroom_pct"], t["disk_headroom_pct"])

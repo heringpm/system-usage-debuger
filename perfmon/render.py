@@ -57,6 +57,19 @@ def build_lines(sample, evaluation):
                 lines.append((th.WARN,
                               f"    errors/drops: rx {net['rx_errs_per_s']:.1f}/s  tx {net['tx_errs_per_s']:.1f}/s"))
 
+    rdma_ports = sample.get("rdma") or {}
+    if rdma_ports:
+        header("RDMA")
+        for name, port in sorted(rdma_ports.items()):
+            label = f"rdma.{name}.headroom"
+            link = f"{port['link_mbps']:.0f} Mb/s" if port["link_mbps"] else "unknown link speed"
+            headroom = f"{port['headroom_pct']:5.1f}%" if port["headroom_pct"] is not None else "  n/a"
+            lines.append((status_by_label.get(label, th.OK),
+                          f"  {name:<14} rx {port['rx_mbps']:8.1f} Mb/s  tx {port['tx_mbps']:8.1f} Mb/s  "
+                          f"headroom {headroom}  ({link})"))
+            if port["errs_per_s"]:
+                lines.append((th.WARN, f"    errors/discards: {port['errs_per_s']:.1f}/s"))
+
     disk_devices = sample.get("disk") or {}
     if disk_devices:
         header("DISK")

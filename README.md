@@ -18,6 +18,7 @@ deploy. Reads directly from `/proc` and `/sys`.
 | CPU | `/proc/stat`, `/proc/loadavg`, `/proc/pressure/cpu` | per-core + aggregate busy/idle %, headroom %, load average, PSI stall % |
 | Memory | `/proc/meminfo`, `/proc/pressure/memory` | used/available/swap, headroom %, PSI stall % |
 | Network | `/proc/net/dev`, `/sys/class/net/*/speed` | per-NIC throughput (Mb/s, pps), errors/drops, **utilization vs negotiated link speed**, headroom % |
+| RDMA | `/sys/class/infiniband/*/ports/*/` | per-HCA-port throughput (Mb/s, pps), errors/discards, utilization vs negotiated link rate, headroom %. Needed because RoCE/InfiniBand verbs traffic bypasses the normal netdev stack and never shows up under "Network" |
 | Disk | `/proc/diskstats` | per-device utilization %, IOPS, throughput, queue depth, latency, headroom % |
 | PCIe | `/sys/bus/pci/devices/*` | current vs max negotiated link speed/width per device, flags degraded links (e.g. a NIC or NVMe drive running below its rated capability) |
 
@@ -34,6 +35,7 @@ configurable thresholds (`perfmon/thresholds.py`):
 | CPU headroom | 20% | 5% |
 | Memory headroom | 15% | 5% |
 | Network headroom | 20% | 5% |
+| RDMA headroom | 20% | 5% |
 | Disk headroom | 20% | 5% |
 
 PSI stall % and swap used % use the opposite direction (higher is

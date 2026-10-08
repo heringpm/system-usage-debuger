@@ -15,6 +15,7 @@ from .collectors import memory as memory_mod
 from .collectors import network as network_mod
 from .collectors import disk as disk_mod
 from .collectors import pci as pci_mod
+from .collectors import rdma as rdma_mod
 
 # (module, bundle-local prefix); psi has no read/compute to rename.
 _COLLECTOR_MODULES = [
@@ -23,6 +24,7 @@ _COLLECTOR_MODULES = [
     ("network", network_mod),
     ("disk", disk_mod),
     ("pci", pci_mod),
+    ("rdma", rdma_mod),
 ]
 
 _MAIN_TEMPLATE = '''
@@ -34,6 +36,7 @@ def _collect_raw():
         "network": network_read(),
         "disk": disk_read(),
         "pci": pci_read(),
+        "rdma": rdma_read(),
     }
 
 
@@ -54,6 +57,7 @@ def main():
             "network": network_compute(prev["network"], curr["network"], dt),
             "disk": disk_compute(prev["disk"], curr["disk"], dt),
             "pci": pci_compute(prev["pci"], curr["pci"], dt),
+            "rdma": rdma_compute(prev["rdma"], curr["rdma"], dt),
         }
         try:
             sys.stdout.write(json.dumps(sample, default=str) + "\\n")

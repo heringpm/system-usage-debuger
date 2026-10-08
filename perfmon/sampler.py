@@ -3,7 +3,7 @@ snapshot into a dict of computed metrics via collector.compute(prev, curr, dt).
 """
 import time
 
-from .collectors import cpu, memory, network, disk, pci
+from .collectors import cpu, memory, network, disk, pci, rdma
 
 COLLECTORS = {
     "cpu": cpu,
@@ -11,6 +11,7 @@ COLLECTORS = {
     "network": network,
     "disk": disk,
     "pci": pci,
+    "rdma": rdma,
 }
 
 
