@@ -77,7 +77,8 @@ perfmon --warn-headroom 30 --crit-headroom 10     # tune thresholds
 CLI flags:
 - `--interval SECONDS` — seconds between samples (default: 2)
 - `--duration SECONDS` — stop after N seconds (default: run until Ctrl-C / `q`)
-- `--mode {live,text,json}` — `live` = curses dashboard (default), `text` = plain ANSI text, `json` = one JSON object per line
+- `--mode {live,text,json}` — `live` = curses dashboard (default, supports `\u2191`/`\u2193`/PgUp/PgDn/Home/End to scroll when a sample has more lines than fit on screen), `text` = plain ANSI text, `json` = one JSON object per line
+- `--no-clear` — (`--mode text` only) don't clear the screen between samples; each sample prints below the last so your terminal's normal scrollback shows history instead of being erased every interval
 - `--csv PATH` — append every sample to this CSV file (auto-migrates the header if new devices/NICs appear over time)
 - `--once` — take a single sample and exit
 - `--warn-headroom` / `--crit-headroom` — override the default WARN/CRIT headroom % thresholds for cpu/mem/net/disk
