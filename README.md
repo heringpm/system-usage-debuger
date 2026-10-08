@@ -84,6 +84,27 @@ CLI flags:
 - `--once` — take a single sample and exit
 - `--warn-headroom` / `--crit-headroom` — override the default WARN/CRIT headroom % thresholds for cpu/mem/net/disk
 - `--mem-bandwidth` — also show real DRAM read/write bandwidth (MB/s) via `perf stat` uncore counters. Supports Intel and AMD Zen2+/EPYC, needs the `perf` binary plus root or `CAP_PERFMON` (uncore PMUs are system-wide), and adds ~0.2s per sample. Local monitoring only (not supported with `--host`). If unsupported on the machine, shows a visible "unavailable" line instead of failing
+- `--prometheus-port PORT` — expose the latest sample as Prometheus text format on `http://0.0.0.0:PORT/metrics`, for scraping by a Prometheus server and graphing over time in Grafana. Runs alongside whatever `--mode` is active (including `--host` multi-host monitoring, where every metric gets a `host` label), uses only the stdlib `http.server` (no new dependency)
+
+### Exporting to Prometheus/Grafana
+
+```bash
+perfmon --mode text --prometheus-port 9877          # start the dashboard + metrics endpoint
+curl http://localhost:9877/metrics                  # sanity-check the exposition format
+```
+
+Point a Prometheus server at `<this-host>:9877` with a scrape config like:
+
+```yaml
+scrape_configs:
+  - job_name: perfmon
+    static_configs:
+      - targets: ["this-host:9877"]
+```
+
+Then add Prometheus as a Grafana data source and graph any `perfmon_*`
+metric (e.g. `perfmon_cpu_busy_percent`, `perfmon_disk_util_percent{device="sda"}`,
+`perfmon_rdma_rx_mbps{device="..."}`) over time while a job runs.
 
 ### Remote monitoring over SSH
 
@@ -117,6 +138,8 @@ Notes:
 - `perfmon/csvlog.py` — flattens a sample dict into a wide CSV row and appends it, rewriting the header (and backfilling blanks) if a new device/NIC/column shows up mid-run.
 - `perfmon/bundler.py` — uses `inspect.getsource()` on the collector modules to generate a single standalone script, so the remote logic can never drift out of sync with the local code.
 - `perfmon/remote.py` — `RemoteSampler` runs one SSH session per host, piping in the bundle and reading one JSON sample per line from stdout in a background thread; `MultiHostSampler` fans this out across several hosts and merges their latest samples.
+- `perfmon/prometheus_export.py` — renders a sample dict as Prometheus text exposition format, mirroring `render.py`'s section structure.
+- `perfmon/metrics_server.py` — minimal stdlib `http.server`-based HTTP server that serves the latest sample as Prometheus text on `/metrics` (used by `--prometheus-port`).
 - `perfmon/cli.py` — argument parsing and wiring of the above into the `perfmon` command.
 
 ## Requirements
