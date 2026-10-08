@@ -101,4 +101,7 @@ def _main(stdscr, sampler, interval, thresholds_cfg, duration):
 
 
 def run(sampler, interval, thresholds_cfg, duration=None):
-    curses.wrapper(_main, sampler, interval, thresholds_cfg, duration)
+    try:
+        curses.wrapper(_main, sampler, interval, thresholds_cfg, duration)
+    except KeyboardInterrupt:
+        pass
