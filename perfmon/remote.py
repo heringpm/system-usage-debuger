@@ -39,7 +39,7 @@ class RemoteSampler:
         ]
         self._proc = subprocess.Popen(
             cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, bufsize=1,
+            universal_newlines=True, bufsize=1,
         )
         self._proc.stdin.write(bundle)
         self._proc.stdin.close()

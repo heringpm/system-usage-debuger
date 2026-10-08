@@ -54,7 +54,8 @@ def _lspci_label(addr):
     label = None
     try:
         out = subprocess.run(
-            ["lspci", "-mm", "-s", addr], capture_output=True, text=True, timeout=2,
+            ["lspci", "-mm", "-s", addr],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=2,
         ).stdout.strip()
         if out:
             fields = shlex.split(out)

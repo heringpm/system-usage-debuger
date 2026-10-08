@@ -51,7 +51,9 @@ def _discover_events():
         _events_cache = ""
         return _events_cache
     try:
-        out = subprocess.run(["perf", "list"], capture_output=True, text=True, timeout=10).stdout
+        out = subprocess.run(
+            ["perf", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=10,
+        ).stdout
     except (OSError, subprocess.SubprocessError):
         _events_cache = ""
         return _events_cache
@@ -95,7 +97,10 @@ def _dimm_speed_mts():
     if not shutil.which("dmidecode"):
         return None
     try:
-        out = subprocess.run(["dmidecode", "-t", "memory"], capture_output=True, text=True, timeout=10).stdout
+        out = subprocess.run(
+            ["dmidecode", "-t", "memory"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, timeout=10,
+        ).stdout
     except (OSError, subprocess.SubprocessError):
         return None
     speeds = []
@@ -133,7 +138,7 @@ def read():
     try:
         proc = subprocess.run(
             ["perf", "stat", "-e", events, "-a", "-x,", "sleep", str(WINDOW_S)],
-            capture_output=True, text=True, timeout=WINDOW_S + 10,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=WINDOW_S + 10,
         )
     except (OSError, subprocess.SubprocessError) as e:
         return {"available": False, "reason": f"perf stat failed to run: {e}"}
