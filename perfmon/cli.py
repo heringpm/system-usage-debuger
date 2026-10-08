@@ -51,6 +51,10 @@ def parse_args(argv=None):
                     help="also measure DRAM read/write bandwidth via `perf stat` uncore counters "
                          "(Intel-only, needs the `perf` binary + root/CAP_PERFMON; adds ~0.2s per "
                          "sample; off by default). Not supported for --host (remote) targets.")
+    p.add_argument("--prometheus-port", type=int, default=None, metavar="PORT",
+                    help="expose the latest sample as Prometheus text format on "
+                         "http://0.0.0.0:PORT/metrics, for scraping by Prometheus "
+                         "(and graphing in Grafana). Runs alongside whatever --mode is active.")
     return p.parse_args(argv)
 
 
@@ -83,6 +87,11 @@ def main(argv=None):
     sampler = _build_sampler(args)
     is_multi = getattr(sampler, "is_multi", False)
     csv_logger = CsvLogger(args.csv) if args.csv else None
+    metrics_server = None
+    if args.prometheus_port is not None:
+        from .metrics_server import MetricsServer
+        metrics_server = MetricsServer(args.prometheus_port, is_multi=is_multi)
+        metrics_server.start()
 
     try:
         if args.once:
@@ -99,42 +108,49 @@ def main(argv=None):
                 evaluation = th.evaluate(sample, thresholds_cfg)
             if csv_logger:
                 csv_logger.write(sample)
+            if metrics_server:
+                metrics_server.update(sample)
             print(json.dumps({**sample, "evaluation": evaluation}, indent=2, default=str))
             return 0
 
         if args.mode == "json":
-            _run_json(sampler, args, thresholds_cfg, csv_logger, is_multi)
+            _run_json(sampler, args, thresholds_cfg, csv_logger, metrics_server, is_multi)
         elif args.mode == "text":
             from .text_ui import run as run_text
             if args.no_clear:
                 run_text = functools.partial(run_text, clear=False)
-            _wrap_csv(run_text, sampler, args, thresholds_cfg, csv_logger, is_multi)
+            _wrap_hooks(run_text, sampler, args, thresholds_cfg, csv_logger, metrics_server, is_multi)
         else:
             from .curses_ui import run as run_curses
-            _wrap_csv(run_curses, sampler, args, thresholds_cfg, csv_logger, is_multi)
+            _wrap_hooks(run_curses, sampler, args, thresholds_cfg, csv_logger, metrics_server, is_multi)
         return 0
     finally:
         if hasattr(sampler, "close"):
             sampler.close()
+        if metrics_server:
+            metrics_server.stop()
 
 
-def _wrap_csv(run_fn, sampler, args, thresholds_cfg, csv_logger, is_multi):
-    if csv_logger is None:
+def _wrap_hooks(run_fn, sampler, args, thresholds_cfg, csv_logger, metrics_server, is_multi_flag):
+    if csv_logger is None and metrics_server is None:
         run_fn(sampler, args.interval, thresholds_cfg, duration=args.duration)
         return
 
-    class _LoggingSampler:
-        is_multi = is_multi
+    class _HookedSampler:
+        is_multi = is_multi_flag
 
         def sample(self):
             s = sampler.sample()
-            csv_logger.write(s)
+            if csv_logger:
+                csv_logger.write(s)
+            if metrics_server:
+                metrics_server.update(s)
             return s
 
-    run_fn(_LoggingSampler(), args.interval, thresholds_cfg, duration=args.duration)
+    run_fn(_HookedSampler(), args.interval, thresholds_cfg, duration=args.duration)
 
 
-def _run_json(sampler, args, thresholds_cfg, csv_logger, is_multi):
+def _run_json(sampler, args, thresholds_cfg, csv_logger, metrics_server, is_multi):
     import time
     start = time.monotonic()
     try:
@@ -148,6 +164,8 @@ def _run_json(sampler, args, thresholds_cfg, csv_logger, is_multi):
                 sample_out = sample
             if csv_logger:
                 csv_logger.write(sample_out)
+            if metrics_server:
+                metrics_server.update(sample if is_multi else sample_out)
             print(json.dumps({**sample_out, "evaluation": evaluation}, default=str))
             sys.stdout.flush()
             if args.duration is not None and (time.monotonic() - start) >= args.duration:
