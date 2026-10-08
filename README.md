@@ -110,9 +110,10 @@ A ready-made dashboard covering every section (CPU/scheduler, top
 processes, NUMA, memory bandwidth, network, RDMA, disk, PCIe) is at
 [`grafana/perfmon-dashboard.json`](grafana/perfmon-dashboard.json). In
 Grafana: **Dashboards → New → Import**, upload/paste the file, pick your
-Prometheus data source when prompted. It includes a `$host` template
-variable (defaults to all hosts) for filtering when monitoring multiple
-machines via `--host`.
+Prometheus data source when prompted. It includes an `$instance` template
+variable (defaults to all) based on Prometheus's own `instance` label, for
+filtering when you scrape more than one `perfmon --prometheus-port`
+target (e.g. one process per machine).
 
 ### Remote monitoring over SSH
 
